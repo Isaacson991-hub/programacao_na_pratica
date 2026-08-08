@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programação na Prática — Isaac C. A.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --editor:#1c1c22;
+    --editor-line:#26262f;
+    --paper:#f5f4ef;
+    --ink:#17171b;
+    --muted:#5b5c63;
+    --kw:#a855c9;     /* keyword violet */
+    --str:#2f9e63;    /* string green */
+    --fn:#2f8fbd;     /* function cyan */
+    --num:#d97f3a;    /* number/const orange */
+    --comment:#7a7a85;
+    --syn-kw:#c792ea; --syn-str:#8fd9a8; --syn-fn:#7fc6e8; --syn-num:#f2a765; --syn-cm:#7a7a85;
+    --border:rgba(23,23,27,0.12);
+    --border-dark:rgba(245,244,239,0.12);
+    --surface-alt:#e9e6de;
+    --card-bg:var(--paper);
+    --cta-bg:#17171b;
+    --cta-text:#f5f4ef;
+  }
+  html[data-theme="dark"]{
+    --paper:#121216;
+    --ink:#f1f0eb;
+    --muted:#9c9ca6;
+    --kw:#c792ea;
+    --str:#8fd9a8;
+    --fn:#7fc6e8;
+    --num:#f2a765;
+    --comment:#83838d;
+    --border:rgba(241,240,235,0.12);
+    --border-dark:rgba(241,240,235,0.1);
+    --surface-alt:#1b1b20;
+    --card-bg:#17171b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    position:relative;
+    transition:background-color .3s ease, color .3s ease;
+  }
+  ::selection{background:var(--kw); color:#fff;}
+
+  /* ---------- AMBIENT GLOW ---------- */
+  .glow{
+    position:fixed; z-index:0; pointer-events:none; border-radius:50%;
+    filter:blur(90px); opacity:.35; transition:opacity .3s ease;
+  }
+  .glow-a{width:520px; height:520px; top:-160px; left:-120px; background:var(--kw); animation:driftA 22s ease-in-out infinite;}
+  .glow-b{width:460px; height:460px; top:120px; right:-160px; background:var(--fn); animation:driftB 26s ease-in-out infinite;}
+  .glow-c{width:420px; height:420px; bottom:-180px; left:38%; background:var(--str); opacity:.22; animation:driftC 30s ease-in-out infinite;}
+  html[data-theme="dark"] .glow{opacity:.5;}
+  @keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(60px,40px);}}
+  @keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-50px,60px);}}
+  @keyframes driftC{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(30px,-30px) scale(1.08);}}
+  nav.top, header.hero, section, footer{position:relative; z-index:1;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important;}
+  }
+  h1,h2,h3{font-family:'JetBrains Mono', monospace; letter-spacing:-0.01em;}
+  img{max-width:100%; display:block;}
+  a{color:inherit;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 28px;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem;
+    letter-spacing:0.05em; text-transform:none;
+    color:var(--fn); display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:'//'; color:var(--comment);}
+
+  /* ---------- NAV ---------- */
+  nav.top{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:24px 28px; position:relative; z-index:5;
+  }
+  .brand{font-family:'JetBrains Mono', monospace; font-weight:600; font-size:0.98rem;}
+  .brand .dot{color:var(--fn);}
+  a.top-cta{
+    font-family:'JetBrains Mono', monospace; font-size:0.74rem;
+    border:1px solid var(--border); padding:9px 16px; border-radius:6px;
+    text-decoration:none; color:var(--ink);
+    transition:border-color .2s ease, background .2s ease;
+  }
+  a.top-cta:hover{border-color:var(--ink); background:rgba(23,23,27,0.04);}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:30px 0 110px;}
+  .hero-grid{
+    display:grid; grid-template-columns:1.05fr 1fr; gap:56px; align-items:center;
+  }
+  .hero-copy h1{
+    font-size:clamp(2.1rem, 4.6vw, 3.2rem);
+    font-weight:600; line-height:1.14; margin-top:18px;
+  }
+  .hero-copy h1 .accent{
+    background:linear-gradient(100deg, var(--kw), var(--fn) 60%, var(--str));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    background-size:200% auto; animation:sheen 6s ease-in-out infinite;
+  }
+  @keyframes sheen{0%,100%{background-position:0% center;} 50%{background-position:100% center;}}
+  .hero-copy p{
+    margin-top:22px; font-size:1.04rem; line-height:1.65; color:var(--muted); max-width:480px;
+  }
+  .hero-actions{margin-top:34px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;}
+  .btn-primary{
+    background:var(--ink); color:var(--paper);
+    font-family:'JetBrains Mono', monospace; font-weight:500; font-size:0.92rem;
+    padding:17px 26px; border-radius:8px; text-decoration:none;
+    display:inline-flex; align-items:center; gap:10px;
+    position:relative; overflow:hidden;
+    box-shadow:0 0 0 0 rgba(143,217,168,0.5);
+    transition:transform .25s ease, background .25s ease, box-shadow .25s ease;
+  }
+  .btn-primary::before{
+    content:''; position:absolute; inset:0; transform:translateX(-120%);
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,0.16), transparent);
+  }
+  .btn-primary:hover::before{transform:translateX(120%); transition:transform .8s ease;}
+  .btn-primary:hover{background:#000; transform:translateY(-2px); box-shadow:0 8px 26px -6px rgba(0,0,0,0.35);}
+  .btn-primary .caret{color:var(--str);}
+  .btn-pulse{animation:pulseGlow 2.6s ease-in-out infinite;}
+  @keyframes pulseGlow{
+    0%,100%{box-shadow:0 0 0 0 rgba(143,217,168,0.45);}
+    50%{box-shadow:0 0 0 10px rgba(143,217,168,0);}
+  }
+  .hero-note{font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:var(--muted);}
+
+  /* ---------- CODE EDITOR MOCKUP (signature) ---------- */
+  .editor{
+    background:var(--editor); border-radius:12px; overflow:hidden;
+    box-shadow:0 30px 70px -20px rgba(0,0,0,0.35);
+    border:1px solid #2c2c35;
+    animation:floaty 6s ease-in-out infinite;
+  }
+  @keyframes floaty{0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);}}
+  .editor-tabs{
+    display:flex; align-items:center; gap:0;
+    background:#19191e; padding:0 4px;
+    border-bottom:1px solid #2c2c35;
+  }
+  .editor-dots{display:flex; gap:6px; padding:14px 12px;}
+  .editor-dots span{width:10px; height:10px; border-radius:50%; display:block;}
+  .editor-dots span:nth-child(1){background:#e8685f;}
+  .editor-dots span:nth-child(2){background:#e8c15f;}
+  .editor-dots span:nth-child(3){background:#63cf7a;}
+  .tab{
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:var(--comment);
+    padding:12px 16px; border-right:1px solid #2c2c35;
+  }
+  .tab.active{color:var(--paper); background:var(--editor); border-top:2px solid var(--fn);}
+  .editor-body{padding:26px 24px 30px; font-family:'JetBrains Mono', monospace; font-size:0.86rem; line-height:1.85;}
+  .ln{display:flex; gap:18px;}
+  .ln .no{color:#45454f; width:16px; text-align:right; user-select:none;}
+  .ln .code{white-space:pre; color:#d8d8de;}
+  .tk-kw{color:var(--kw);} .tk-fn{color:var(--fn);} .tk-str{color:var(--str);}
+  .tk-num{color:var(--num);} .tk-cm{color:var(--comment);}
+  .caret-blink{
+    display:inline-block; width:7px; height:16px; background:var(--fn);
+    animation:blink 1s step-end infinite; vertical-align:-3px; margin-left:2px;
+  }
+  @keyframes blink{50%{opacity:0;}}
+  #typeTarget{white-space:pre;}
+  .console-line{
+    margin-top:10px; padding-top:14px; border-top:1px dashed #33333d;
+    opacity:0; transform:translateY(6px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .console-line.show{opacity:1; transform:translateY(0);}
+  .console-line .ok{color:var(--str); font-weight:600;}
+
+  /* ---------- SECTION GENERIC ---------- */
+  section{padding:100px 0;}
+  .section-head{max-width:620px; margin-bottom:56px;}
+  .section-head h2{
+    font-size:clamp(1.7rem, 3.2vw, 2.4rem); font-weight:600; margin-top:16px; line-height:1.15;
+  }
+  .section-head p{margin-top:16px; font-size:1rem; line-height:1.6; color:var(--muted);}
+
+  /* ---------- PAIN ---------- */
+  .pain{border-top:1px solid var(--border);}
+  .pain-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--border); border:1px solid var(--border);}
+  .pain-item{background:var(--card-bg); padding:32px 32px; display:flex; gap:16px; transition:background-color .3s ease, transform .25s ease, box-shadow .25s ease;}
+  .pain-item:hover{transform:translateY(-4px); box-shadow:0 14px 28px -14px rgba(0,0,0,0.25); z-index:2;}
+  .pain-item .tag{font-family:'JetBrains Mono', monospace; font-size:0.78rem; color:var(--kw); flex-shrink:0; transition:transform .25s ease;}
+  .pain-item:hover .tag{transform:scale(1.15);}
+  .pain-item p{font-size:1rem; line-height:1.55; font-weight:500;}
+
+  /* ---------- CURRICULUM ---------- */
+  .curriculum{background:var(--editor); color:var(--paper);}
+  .curriculum .eyebrow{color:var(--fn);}
+  .curriculum .section-head p{color:#a9a9b3;}
+  .curr-list{display:flex; flex-direction:column;}
+  .curr-row{
+    display:grid; grid-template-columns:100px 1fr; gap:30px;
+    padding:30px 0; border-top:1px solid var(--border-dark); align-items:start;
+  }
+  .curr-row:last-child{border-bottom:1px solid var(--border-dark);}
+  .curr-idx{font-family:'JetBrains Mono', monospace; font-size:0.82rem; color:var(--str);}
+  .curr-body h3{font-family:'JetBrains Mono', monospace; font-size:1.14rem; font-weight:600;}
+  .curr-body p{margin-top:8px; font-size:0.95rem; line-height:1.6; color:#a9a9b3; max-width:600px;}
+
+  /* ---------- BENEFITS ---------- */
+  .benefits-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:2px;
+    background:var(--border); border:1px solid var(--border); margin-top:8px;
+  }
+  .b-card{background:var(--card-bg); padding:34px 26px; transition:background-color .3s ease, transform .25s ease, box-shadow .25s ease;}
+  .b-card:hover{transform:translateY(-4px); box-shadow:0 14px 28px -14px rgba(0,0,0,0.25); z-index:2;}
+  .b-card .ico{font-family:'JetBrains Mono', monospace; color:var(--fn); font-size:0.82rem; margin-bottom:16px; transition:transform .3s ease;}
+  .b-card:hover .ico{transform:rotate(8deg) scale(1.1);}
+  .b-card h4{font-family:'JetBrains Mono', monospace; font-size:1rem; font-weight:600;}
+  .b-card p{margin-top:8px; font-size:0.88rem; color:var(--muted); line-height:1.5;}
+
+  /* ---------- FOR WHOM ---------- */
+  .forwhom{background:var(--surface-alt); padding:96px 0; transition:background-color .3s ease;}
+  .forwhom .wrap{display:grid; grid-template-columns:0.9fr 1.1fr; gap:56px;}
+  .forwhom h2{font-size:clamp(1.6rem,2.8vw,2.1rem); font-weight:600; line-height:1.16;}
+  .fw-item{padding:18px 0; border-top:1px solid var(--border); display:flex; gap:14px; font-size:0.98rem; line-height:1.55;}
+  .fw-item:last-child{border-bottom:1px solid var(--border);}
+  .fw-item .m{font-family:'JetBrains Mono', monospace; color:var(--kw); flex-shrink:0;}
+
+  /* ---------- FINAL ---------- */
+  .final{background:var(--cta-bg); color:var(--cta-text); padding:120px 0 100px; text-align:center;}
+  .final .eyebrow{justify-content:center;} .final .eyebrow::before{content:none;}
+  .final h2{font-size:clamp(1.9rem,4.6vw,3rem); font-weight:600; max-width:720px; margin:20px auto 0; line-height:1.14;}
+  .final h2 .accent{color:var(--str);}
+  .final p{margin:20px auto 0; max-width:480px; color:#a9a9b3; font-size:1rem; line-height:1.6;}
+  .final .btn-primary{margin-top:36px; background:var(--str); color:#0f1a12;}
+  .final .btn-primary:hover{background:#a6ecbb;}
+  .final-note{margin-top:18px; font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:#6f707a;}
+
+  footer{background:#111114; color:#7a7a85; padding:28px 0; font-size:0.8rem; font-family:'JetBrains Mono', monospace;}
+  footer .wrap{display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+
+  /* ---------- THEME TOGGLE ---------- */
+  .theme-toggle{
+    width:38px; height:38px; border-radius:8px;
+    border:1px solid var(--border); background:transparent;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink); transition:border-color .2s ease, background .2s ease;
+  }
+  .theme-toggle:hover{border-color:var(--ink); background:rgba(127,127,127,0.08);}
+  .theme-toggle svg{width:17px; height:17px;}
+  .theme-toggle .icon-moon{display:none;}
+  html[data-theme="dark"] .theme-toggle .icon-sun{display:none;}
+  html[data-theme="dark"] .theme-toggle .icon-moon{display:block;}
+  .nav-right{display:flex; align-items:center; gap:14px;}
+
+  @media (max-width: 860px){
+    .hero-grid{grid-template-columns:1fr;}
+    .pain-grid{grid-template-columns:1fr;}
+    .curr-row{grid-template-columns:44px 1fr; gap:18px;}
+    .forwhom .wrap{grid-template-columns:1fr; gap:32px;}
+    section{padding:70px 0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="glow glow-a" aria-hidden="true"></div>
+<div class="glow glow-b" aria-hidden="true"></div>
+<div class="glow glow-c" aria-hidden="true"></div>
+
+<nav class="top">
+  <div class="brand">isaac_c<span class="dot">.</span>a</div>
+  <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema claro/escuro">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+    </button>
+    <a class="top-cta" href="https://isaac-cabral-alves.herospark.co/programacaonapr%C3%A1tica" target="_blank" rel="noopener">$ acessar_curso</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow">curso · programação na prática</div>
+      <h1>Você não precisa entender tudo pra começar a <span class="accent">programar de verdade.</span></h1>
+      <p>Aprenda escrevendo código desde a primeira aula. Sem enrolação teórica, sem "tutorial hell" — só prática guiada, um passo de cada vez, até você conseguir construir sozinho.</p>
+      <div class="hero-actions">
+        <a class="btn-primary" href="https://isaac-cabral-alves.herospark.co/programacaonapr%C3%A1tica" target="_blank" rel="noopener">
+          <span class="caret">&gt;</span> Quero começar a programar
+        </a>
+        <span class="hero-note">acesso liberado após confirmação da compra</span>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="editor">
+        <div class="editor-tabs">
+          <div class="editor-dots"><span></span><span></span><span></span></div>
+          <div class="tab active">aula-01.js</div>
+          <div class="tab">projeto.js</div>
+        </div>
+        <div class="editor-body">
+          <div class="ln"><span class="no">1</span><span class="code"><span class="tk-cm">// dia 1: seu primeiro projeto real</span></span></div>
+          <div class="ln"><span class="no">2</span><span class="code"><span class="tk-kw">function</span> <span class="tk-fn">aprenderNaPratica</span>(ideia) {</span></div>
+          <div class="ln"><span class="no">3</span><span class="code">&nbsp;&nbsp;<span class="tk-kw">const</span> resultado = construir(ideia);</span></div>
+          <div class="ln"><span class="no">4</span><span class="code">&nbsp;&nbsp;<span class="tk-kw">return</span> <span class="tk-str">"funcionando."</span>;</span></div>
+          <div class="ln"><span class="no">5</span><span class="code">}</span></div>
+          <div class="ln"><span class="no">6</span><span class="code">&nbsp;</span></div>
+          <div class="ln"><span class="no">7</span><span class="code"><span id="typeTarget"></span><span class="caret-blink"></span></span></div>
+          <div class="console-line" id="consoleLine">
+            <span class="tk-cm">&gt;</span> <span class="ok">✓ vaga garantida.</span> bem-vindo(a) à turma.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="pain">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow" style="color:var(--kw);">isso te soa familiar?</div>
+      <h2>Você já tentou aprender a programar sozinho — e travou.</h2>
+      <p>Não é falta de capacidade. É falta de um caminho prático, com alguém te mostrando o próximo passo.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-item"><span class="tag">01</span><p>Já assistiu dezenas de vídeos, mas na hora de escrever código do zero, a mente trava.</p></div>
+      <div class="pain-item"><span class="tag">02</span><p>Entende a teoria, mas não sabe transformar isso em um projeto real que funcione.</p></div>
+      <div class="pain-item"><span class="tag">03</span><p>Começou vários cursos e nunca terminou nenhum — sempre falta a parte prática.</p></div>
+      <div class="pain-item"><span class="tag">04</span><p>Tem medo de estar "atrasado demais" para começar na programação.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="curriculum">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">como funciona</div>
+      <h2>Você aprende programando, não só assistindo.</h2>
+      <p>Cada etapa te leva de um conceito novo até um resultado que você consegue ver rodando na tela.</p>
+    </div>
+    <div class="curr-list">
+      <div class="curr-row">
+        <div class="curr-idx">01</div>
+        <div class="curr-body"><h3>Base sólida, sem enrolação</h3><p>Os fundamentos que você realmente vai usar no dia a dia — nada de teoria que nunca cai na prática.</p></div>
+      </div>
+      <div class="curr-row">
+        <div class="curr-idx">02</div>
+        <div class="curr-body"><h3>Primeiro projeto do zero</h3><p>Você constrói algo funcional desde as primeiras aulas, para sentir na prática como o código ganha vida.</p></div>
+      </div>
+      <div class="curr-row">
+        <div class="curr-idx">03</div>
+        <div class="curr-body"><h3>Resolvendo problemas de verdade</h3><p>Aprenda a debugar, quebrar problemas grandes em pequenos passos e pensar como quem programa no dia a dia.</p></div>
+      </div>
+      <div class="curr-row">
+        <div class="curr-idx">04</div>
+        <div class="curr-body"><h3>Projeto final para o seu portfólio</h3><p>Saia do curso com algo concreto para mostrar — não só um certificado.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="benefits">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow" style="color:var(--kw);">no seu ritmo</div>
+      <h2>Estude de onde e quando quiser.</h2>
+    </div>
+    <div class="benefits-grid">
+      <div class="b-card"><div class="ico">[ ∞ ]</div><h4>Acesso ilimitado após a compra</h4><p>O conteúdo é seu — volte quantas vezes precisar, sem prazo de expiração.</p></div>
+      <div class="b-card"><div class="ico">[ ▢ ]</div><h4>Disponível pelo aplicativo</h4><p>Continue de onde parou direto do celular, em qualquer lugar.</p></div>
+      <div class="b-card"><div class="ico">[ ⌘ ]</div><h4>Acesso ao conteúdo quando quiser</h4><p>Sem horário fixo. Você estuda no seu tempo, no seu ritmo.</p></div>
+      <div class="b-card"><div class="ico">[ ● ]</div><h4>Plataforma acessível para todos</h4><p>Interface simples, pensada para quem está começando do zero.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="forwhom">
+  <div class="wrap">
+    <h2>Esse curso é para você que:</h2>
+    <div class="fw-list">
+      <div class="fw-item"><span class="m">→</span>Nunca escreveu uma linha de código, mas quer começar do jeito certo.</div>
+      <div class="fw-item"><span class="m">→</span>Já tentou aprender sozinho e travou na parte prática.</div>
+      <div class="fw-item"><span class="m">→</span>Quer sair do curso com um projeto de verdade no portfólio.</div>
+      <div class="fw-item"><span class="m">→</span>Prefere aprender fazendo, em vez de só assistindo aula.</div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="eyebrow">comece agora</div>
+    <h2>Sua primeira linha de código pode ser <span class="accent">hoje.</span></h2>
+    <p>Acesso 100% digital, liberado imediatamente após a confirmação da compra. Estude quando e onde quiser.</p>
+    <a class="btn-primary" href="https://isaac-cabral-alves.herospark.co/programacaonapr%C3%A1tica" target="_blank" rel="noopener">
+      <span class="caret" style="color:#0f1a12;">&gt;</span> Quero começar a programar
+    </a>
+    <div class="final-note">VISA · MASTERCARD · AMEX · DINERS — pagamento processado com segurança pela Herospark</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© isaac_c.a</span>
+    <span>conteúdo hospedado na plataforma Herospark</span>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var root = document.documentElement;
+    var toggle = document.getElementById('themeToggle');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    toggle.addEventListener('click', function(){
+      var current = root.getAttribute('data-theme');
+      root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+  })();
+
+  // ---------- Indecisive typing animation ----------
+  (function(){
+    var target = document.getElementById('typeTarget');
+    var consoleLine = document.getElementById('consoleLine');
+    var ctaBtns = document.querySelectorAll('.btn-primary');
+    if(!target) return;
+
+    // rascunhos indecisos antes de "decidir" o que escrever
+    var drafts = [
+      'talvez... aprender sozinho()',
+      'ou continuar travado(a)?',
+      'entrar("programação-na-prática")'
+    ];
+    var finalHTML = '<span class="tk-fn">entrar</span>(<span class="tk-str">"programação-na-prática"</span>)';
+
+    var typeSpeed = 42;
+    var deleteSpeed = 26;
+    var pauseAfterType = 700;
+    var pauseAfterDelete = 260;
+
+    function typeText(str, cb){
+      var i = 0;
+      target.textContent = '';
+      (function step(){
+        if(i <= str.length){
+          target.textContent = str.slice(0, i);
+          i++;
+          setTimeout(step, typeSpeed);
+        } else { cb(); }
+      })();
+    }
+    function deleteText(cb){
+      var str = target.textContent;
+      (function step(){
+        if(str.length > 0){
+          str = str.slice(0, -1);
+          target.textContent = str;
+          setTimeout(step, deleteSpeed);
+        } else { cb(); }
+      })();
+    }
+    function runDraft(index){
+      if(index < drafts.length - 1){
+        typeText(drafts[index], function(){
+          setTimeout(function(){
+            deleteText(function(){
+              setTimeout(function(){ runDraft(index + 1); }, pauseAfterDelete);
+            });
+          }, pauseAfterType);
+        });
+      } else {
+        // decisão final: digita palavra por palavra e revela com highlight
+        typeFinal(drafts[index]);
+      }
+    }
+    function typeFinal(str){
+      var i = 0;
+      target.textContent = '';
+      (function step(){
+        if(i <= str.length){
+          target.textContent = str.slice(0, i);
+          i++;
+          setTimeout(step, typeSpeed);
+        } else {
+          target.innerHTML = finalHTML;
+          if(consoleLine){ setTimeout(function(){ consoleLine.classList.add('show'); }, 300); }
+          ctaBtns.forEach(function(b){ b.classList.add('btn-pulse'); });
+        }
+      })();
+    }
+
+    var started = false;
+    function start(){
+      if(started) return;
+      started = true;
+      setTimeout(function(){ runDraft(0); }, 500);
+    }
+
+    if('IntersectionObserver' in window){
+      var obs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if(e.isIntersecting) start(); });
+      }, {threshold:0.3});
+      obs.observe(target.closest('.editor'));
+    } else {
+      start();
+    }
+  })();
+</script>
+
+</body>
+</html>
